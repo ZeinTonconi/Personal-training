@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+bool check(int k,vector<int> x){
+  priority_queue<int> pq;
+  for(auto &v:x) pq.push(v);
+
+  for(ll i=k-1;i>=0;i--){
+    ll y=(1LL<<i);
+
+    ll a=pq.top();
+    pq.pop();
+    a-=y;
+    if(a>0)
+      pq.push(a);
+  }
+  return pq.empty() ||  pq.top()==0;
+}
+int main(){
+  int t; cin>>t;
+  while(t--){
+    int n; cin>>n;
+    vector<int> x(n);
+    for(auto &v:x) cin>>v;
+    int l=0,r=n+32;
+    while(r-l>1){
+      int mid=(l+r)/2;
+      if(check(mid,x))
+	r=mid;
+      else
+	l=mid;
+    }
+    cout<<l<<endl;
+  }
+		
+}

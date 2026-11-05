@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+
+const int MAX_N=1e6+10;
+
+ll p[MAX_N],w[MAX_N];
+ll sumP[MAX_N],sumW[MAX_N];
+
+int anc[MAX_N];
+
+vector<vi> G;
+
+struct Candidate{
+  ll p, w, x;
+};
+
+class Compare{
+ public:
+ bool operator()(Candidate a, Candidate b){
+   // true if  a and b must swap
+   // false if a is before b, the order is correct
+   return (b.p*a.w<b.w*a.p);
+ }
+};
+
+int sz[MAX_N],pa[MAX_N];
+vector<list<int> >  ord;
+
+void init(int n){
+  
+  ord.resize(n+1);
+  for(int i=0;i<=n;i++){
+    sz[i]=1;
+    pa[i]=i;
+    sumP[i]=p[i];
+    sumW[i]=w[i];
+    ord[i].push_back(i);
+  }
+}
+
+int findset(int i){
+  return (pa[i]==i?i:pa[i]=findset(pa[i]));
+}
+
+bool issameset(int i,int j){
+  return findset(i)==findset(j);
+}
+
+
+void unionset(int j,int i){
+  if(!issameset(i,j)){
+    int u=findset(i), v=findset(j);
+    if(sz[u]>sz[v]){
+      sz[u]+=sz[v];
+      sumP[u]+=sumP[v];
+      sumW[u]+=sumW[v];
+      pa[v]=u;
+      
+      for(auto &o:ord[v])
+	ord[u].push_back(o);
+
+      ord[v].clear();
+    }
+    else{
+      sz[v]+=sz[u];
+      sumP[v]+=sumP[u];
+      sumW[v]+=sumW[u];
+      pa[u]=v;
+      reverse(ord[u].begin(),ord[u].end());
+      for(auto &o:ord[u])
+	ord[v].push_front(o);
+      ord[u].clear();
+    }
+  }
+}
+
+int main(){
+  int n; cin>>n;
+  for(int i=1;i<=n;i++)
+    cin>>p[i];
+
+  for(int i=1;i<=n;i++)
+    cin>>w[i];
+
+  int m; cin>>m;
+  G.resize(n+1);
+
+  memset(anc,-1,sizeof anc);
+  
+  for(int i=0;i<m;i++){
+    int a,b; cin>>a>>b;
+    G[a].push_back(b);
+    anc[b]=a;
+  }
+
+  for(int i=1;i<=n;i++){
+    if(anc[i]==-1) anc[i]=0;
+  }
+
+  priority_queue<Candidate, vector<Candidate>, Compare> pq;
+
+  for(int i=1;i<=n;i++){
+    pq.push({p[i],w[i],i});
+  }
+
+  init(n);
+
+  while(!pq.empty()){
+    auto u = pq.top();
+    pq.pop();
+    if(issameset(u.x,anc[u.x])) continue;
+
+    unionset(u.x,anc[u.x]);
+
+    pq.push({sumP[u.x],sumW[u.x],u.x});
+  }
+
+  for(auto &v:ord[findset(0)]) cout<<v<<" ";
+  cout<<endl;
+
+  
+  ll t=0;
+  ll ans=0;
+  for(auto &v:ord[findset(0)]){
+    ans+=(t+p[v])*w[v];
+    t+=p[v];
+  }
+  cout<<ans<<endl;
+  
+}

@@ -1,0 +1,174 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+/*
+    15 Puzzle - Meet in the Middle using uint64_t state compression
+
+    Each tile uses 4 bits:
+    16 tiles * 4 bits = 64 bits
+
+    This is MUCH faster than string/vector representations.
+*/
+
+using ull = uint64_t;
+
+const int dx[4] = {-1, 1, 0, 0};
+const int dy[4] = {0, 0, -1, 1};
+
+inline ull encode(const vector<int>& board) {
+    ull state = 0;
+    for (int i = 0; i < 16; i++) {
+        state |= (ull(board[i]) << (i * 4));
+    }
+    return state;
+}
+
+inline int get_tile(ull state, int pos) {
+    return (state >> (pos * 4)) & 15ULL;
+}
+
+inline ull set_tile(ull state, int pos, int val) {
+    state &= ~(15ULL << (pos * 4));
+    state |= (ull(val) << (pos * 4));
+    return state;
+}
+
+inline ull swap_tiles(ull state, int a, int b) {
+    int va = get_tile(state, a);
+    int vb = get_tile(state, b);
+
+    state = set_tile(state, a, vb);
+    state = set_tile(state, b, va);
+
+    return state;
+}
+
+vector<ull> get_neighbors(ull state) {
+    vector<ull> neighbors;
+
+    int zero = 0;
+    for (int i = 0; i < 16; i++) {
+        if (get_tile(state, i) == 0) {
+            zero = i;
+            break;
+        }
+    }
+
+    int x = zero / 4;
+    int y = zero % 4;
+
+    for (int dir = 0; dir < 4; dir++) {
+        int nx = x + dx[dir];
+        int ny = y + dy[dir];
+
+        if (nx < 0 || nx >= 4 || ny < 0 || ny >= 4) continue;
+
+        int np = nx * 4 + ny;
+
+        neighbors.push_back(swap_tiles(state, zero, np));
+    }
+
+    return neighbors;
+}
+
+unordered_map<ull, int> bfs_forward(ull start, int max_depth) {
+    unordered_map<ull, int> dist;
+    queue<ull> q;
+
+    dist[start] = 0;
+    q.push(start);
+
+    while (!q.empty()) {
+        ull cur = q.front();
+        q.pop();
+
+        int d = dist[cur];
+        if (d >= max_depth) continue;
+
+        for (ull nxt : get_neighbors(cur)) {
+            if (!dist.count(nxt)) {
+                dist[nxt] = d + 1;
+                q.push(nxt);
+            }
+        }
+    }
+
+    return dist;
+}
+
+int bfs_backward(ull goal, unordered_map<ull, int>& forward_dist, int max_depth) {
+    unordered_map<ull, int> dist;
+    queue<ull> q;
+
+    dist[goal] = 0;
+    q.push(goal);
+
+    int answer = INT_MAX;
+
+    while (!q.empty()) {
+        ull cur = q.front();
+        q.pop();
+
+        int d = dist[cur];
+
+        if (forward_dist.count(cur)) {
+            answer = min(answer, d + forward_dist[cur]);
+        }
+
+        if (d >= max_depth) continue;
+
+        for (ull nxt : get_neighbors(cur)) {
+            if (!dist.count(nxt)) {
+                dist[nxt] = d + 1;
+                q.push(nxt);
+            }
+        }
+    }
+
+    return answer;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    vector<int> start_board(16);
+
+    for (int i = 0; i < 16; i++) {
+        cin >> start_board[i];
+    }
+
+    vector<int> goal_board;
+    for (int i = 1; i <= 15; i++) goal_board.push_back(i);
+    goal_board.push_back(0);
+
+    ull start = encode(start_board);
+    ull goal = encode(goal_board);
+
+    if (start == goal) {
+        cout << 0 << '\n';
+        return 0;
+    }
+
+    auto start_time = chrono::high_resolution_clock::now();
+
+    // Forward BFS
+    unordered_map<ull, int> forward_dist = bfs_forward(start, 18);
+
+    auto mid_time = chrono::high_resolution_clock::now();
+    cerr << "Forward BFS time: "
+         << chrono::duration<double>(mid_time - start_time).count()
+         << " sec\n";
+
+    // Backward BFS
+    int answer = bfs_backward(goal, forward_dist, 27);
+
+    auto end_time = chrono::high_resolution_clock::now();
+    cerr << "Total time: "
+         << chrono::duration<double>(end_time - start_time).count()
+         << " sec\n";
+
+    cout << answer << '\n';
+
+    return 0;
+}

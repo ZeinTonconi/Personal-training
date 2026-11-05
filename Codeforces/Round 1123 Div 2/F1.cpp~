@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+struct Node {
+  int ch[2];
+  int cnt;
+  Node(){
+    ch[0]=ch[1]=-1;
+    cnt=0;
+  }
+};
+
+struct State{
+  int u,v; int val;
+  bool operator>(const State &o) const{
+    return val>o.val;
+  }
+};
+
+vector<Node> trie;
+int B=29;
+
+void init(vector<int> &a){
+  trie.clear();
+  trie.emplace_back();
+  for(int x:a){
+    int u=0;
+    trie[u]=cnt++;
+
+    for(int b=B;b>=0;b--){
+      int bit=(x>>b)&1;
+      if(trie[u].ch[bit]==-1){
+	trie[u].ch[bit]=trie.size();
+	trie.emplace_back();
+      }
+
+      u=trie[u].ch[bit];
+      trie[u].cnt+;
+    }
+      
+  }
+}
+
+
+vector<int> transform(const vector<int>& a) {
+  int n = a.size();
+
+  vector<int> res;
+  res.reserve(n);
+
+  priority_queue<State,
+		 vector<State>,
+		 greater<State>> pq;
+
+  pq.push({0, 0, 0});
+
+  while ((int)res.size() < n) {
+    State cur = pq.top();
+    pq.pop();
+
+    int u = cur.u;
+    int v = cur.v;
+    if (trie[u].ch[0] == -1 &&
+	trie[u].ch[1] == -1) {
+
+      if (u != v) {
+	int x = cur.val;
+	int cnt = trie[u].cnt * trie[v].cnt;
+
+	int take = min<long long>(
+				  cnt,
+				  n - res.size()
+				  );
+
+	while (take--)
+	  res.push_back(x);
+      }
+      else {
+	int x = cur.val;
+	long long cnt = trie[u].cnt;
+
+	long long pairs = cnt * (cnt - 1) / 2;
+
+	int take = min<long long>(
+				  pairs,
+				  n - res.size()
+				  );
+
+	while (take--)
+	  res.push_back(x);
+      }
+
+      continue;
+    }
+    for (int x = 0; x < 2; x++) {
+      int nu = trie[u].ch[x];
+
+      if (nu == -1)
+	continue;
+
+      for (int y = 0; y < 2; y++) {
+	int nv = trie[v].ch[y];
+
+	if (nv == -1)
+	  continue;
+
+	if (nu > nv)
+	  continue;
+
+	int nvx = (cur.val << 1) | (x ^ y);
+
+	pq.push({nu, nv, nvx});
+      }
+    }
+  }
+  sort(res.begin(), res.end());
+  return res;
+}
+int main(){
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL);
+  cout.tie(NULL);
+  int t; cin>>t;
+  while(t--){
+    int n,q; cin>>n>>q;
+    vector<lly> x(n);
+    for(auto &v:x) cin>>v;
+
+    sort(x.begin(),x.end());
+    
+    vector<ll> ans;
+    while(true){
+      ans.push_back(x[n-1]-x[0]);
+      if(x[n-1]==0) break;
+      x=transform(x);
+    }
+    
+    while(q--){
+      int xi; cin>>xi;
+      if(xi<ans.size()){
+	cout<<ans[xi]<<'\n';
+      } else cout<<"0\n";
+    }
+  }
+}

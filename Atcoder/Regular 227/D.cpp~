@@ -1,0 +1,10 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+bool has[510][3][510][3];
+
+int main(){
+  int n,m,q; cin>>n>>m>>q;
+  
+}

@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const ll mod = 998244353;
+
+ll modPow(ll b, ll e, ll m){
+    ll ans = 1;
+    while(e){
+        if(e & 1) ans = ans * b % m;
+        b = b * b % m;
+        e >>= 1;
+    }
+    return ans;
+}
+
+ll numberDigit(ll x){
+    int c = 0;
+    while(x){
+        x /= 10;
+        c++;
+    }
+    return c;
+}
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+
+    while(T--){
+
+        ll N, M;
+        cin >> N >> M;
+
+        ll ans = 0;
+
+        int digits = numberDigit(N);
+
+        ll pow10 = 1;
+
+        for(int d = 1; d <= digits; d++){
+
+            pow10 *= 10; // pow10 = 10^d
+
+            ll cntY;
+
+            if(d < digits){
+                cntY = pow10 - pow10/10;      // 9*10^(d-1)
+            }else{
+                cntY = N - pow10/10 + 1;      // last block
+            }
+
+            ll tenPowMod = modPow(10, d, M);
+            ll g = gcd((tenPowMod - 1 + M) % M, M);
+
+            ll D = M / g;
+
+            ll cntX = N / D;
+
+            ans = (ans + (cntX % mod) * (cntY % mod)) % mod;
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}
